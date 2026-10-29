@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShopKit Pro</title>
+<style>
+:root{--bg:#f5f6fa;--card:#fff;--ink:#1c2033;--mute:#6b7186;--line:#e3e6ef;--acc:#4f46e5;--acc2:#eef0ff;--ok:#0f9d58;--bad:#d93025;--warn:#e8a200}
+@media (prefers-color-scheme:dark){:root{--bg:#10121b;--card:#181b28;--ink:#eceefb;--mute:#9399b2;--line:#2a2e42;--acc:#7c76ff;--acc2:#22254a}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);background:var(--card)}
+header b{font-size:18px}header span{color:var(--mute);font-size:13px}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+nav button{border:0;background:none;color:var(--mute);padding:8px 12px;border-radius:8px;font:inherit;font-weight:600;white-space:nowrap;cursor:pointer}
+nav button.on{background:var(--acc2);color:var(--acc)}
+main{max-width:980px;margin:0 auto;padding:16px}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{margin:0 0 4px;font-size:20px}h3{margin:0 0 10px;font-size:16px}
+.sub{color:var(--mute);margin:0 0 14px;font-size:14px}
+.grid{display:grid;gap:12px}.g2{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;font-weight:600;color:var(--mute);margin-bottom:4px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:90px;resize:vertical}
+button.btn{background:var(--acc);color:#fff;border:0;padding:9px 14px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+button.btn.alt{background:var(--acc2);color:var(--acc)}button.btn.del{background:transparent;color:var(--bad);padding:4px 8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:10px}
+.stat{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.stat small{color:var(--mute);display:block;font-size:12px}.stat b{font-size:20px}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}th{color:var(--mute);font-size:12px}
+.tw{overflow-x:auto}
+.badge{padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;background:var(--acc2);color:var(--acc)}
+.badge.low{background:#fdecea;color:var(--bad)}
+.empty{color:var(--mute);padding:10px 0}
+.printable{background:#fff;color:#111;border:1px solid var(--line);border-radius:10px;padding:28px;margin-top:12px}
+.printable h1{margin:0;font-size:24px}.printable table th,.printable table td{border-color:#ddd;color:#111}
+.printable pre{white-space:pre-wrap;font:14px/1.6 Georgia,serif;margin:0}
+.right{text-align:right}
+@media print{
+  body *{visibility:hidden}
+  .printable,.printable *{visibility:visible}
+  .printable{position:absolute;left:0;top:0;width:100%;border:0;padding:0}
+}
+</style>
+</head>
+<body>
+<header><b>ShopKit Pro</b><span id="bizName"></span></header>
+<nav id="nav"></nav>
+<main>
+
+<!-- DASHBOARD -->
+<section class="tab" id="tab-dash">
+  <div class="card"><h2>Dashboard</h2><p class="sub">Your business at a glance. Everything is saved in this browser.</p>
+    <div class="grid g4" id="dashStats"></div></div>
+  <div class="card"><h3>Low stock alerts</h3><div id="dashLow"></div></div>
+  <div class="card"><h3>Settings &amp; backup</h3>
+    <div class="grid g2">
+      <div><label>Business name</label><input id="setBiz"></div>
+      <div><label>Currency symbol</label><input id="setCur" maxlength="4"></div>
+    </div>
+    <div class="row">
+      <button class="btn" onclick="saveSettings()">Save settings</button>
+      <button class="btn alt" onclick="exportBackup()">Export backup</button>
+      <button class="btn alt" onclick="document.getElementById('imp').click()">Import backup</button>
+      <button class="btn del" onclick="resetAll()">Reset all data</button>
+      <input type="file" id="imp" accept=".json" hidden onchange="importBackup(event)">
+    </div>
+    <p class="sub" style="margin-top:10px">Data lives only in this browser. Export a backup regularly.</p>
+  </div>
+</section>
+
+<!-- PROFIT -->
+<section class="tab" id="tab-profit">
+  <div class="card"><h2>True Profit Calculator</h2><p class="sub">What you really keep per sale, after fees, shipping, ads and returns.</p>
+    <div class="grid g4">
+      <div><label>Selling price</label><input id="p_price" type="number" step="any" value="49"></div>
+      <div><label>Product cost</label><input id="p_cost" type="number" step="any" value="14"></div>
+      <div><label>Shipping you pay</label><input id="p_ship" type="number" step="any" value="5"></div>
+      <div><label>Ad cost per sale</label><input id="p_ads" type="number" step="any" value="9"></div>
+      <div><label>Platform fee %</label><input id="p_fee" type="number" step="any" value="6.5"></div>
+      <div><label>Payment fee %</label><input id="p_pay" type="number" step="any" value="2.9"></div>
+      <div><label>Payment fixed fee</label><input id="p_fix" type="number" step="any" value="0.30"></div>
+      <div><label>Return rate %</label><input id="p_ret" type="number" step="any" value="8"></div>
+      <div><label>Units per month</label><input id="p_units" type="number" step="any" value="200"></div>
+    </div>
+  </div>
+  <div class="card"><h3>Results</h3><div class="grid g4" id="profitOut"></div></div>
+</section>
+
+<!-- CASH -->
+<section class="tab" id="tab-cash">
+  <div class="card"><h2>Cash Flow</h2><p class="sub">Track money in and out.</p>
+    <div class="grid g4">
+      <div><label>Date</label><input id="c_date" type="date"></div>
+      <div><label>Type</label><select id="c_type"><option value="in">Income</option><option value="out">Expense</option></select></div>
+      <div><label>Category</label><input id="c_cat" placeholder="Sales, Ads, Supplier..."></div>
+      <div><label>Amount</label><input id="c_amt" type="number" step="any"></div>
+    </div>
+    <div class="row"><div style="flex:1"><label>Note</label><input id="c_note"></div><button class="btn" onclick="addCash()">Add entry</button></div>
+  </div>
+  <div class="card"><h3>Monthly summary</h3><div class="tw" id="cashMonths"></div></div>
+  <div class="card"><div class="row" style="margin:0 0 10px;justify-content:space-between"><h3 style="margin:0">Entries</h3><button class="btn alt" onclick="exportCSV()">Export CSV</button></div><div class="tw" id="cashList"></div></div>
+</section>
+
+<!-- INVENTORY -->
+<section class="tab" id="tab-inv">
+  <div class="card"><h2>Inventory, Orders &amp; Returns</h2><p class="sub">Stock updates automatically when you log orders and returns.</p>
+    <h3>Add product</h3>
+    <div class="grid g4">
+      <div><label>SKU</label><input id="i_sku"></div>
+      <div><label>Name</label><input id="i_name"></div>
+      <div><label>Stock</label><input id="i_stock" type="number" value="0"></div>
+      <div><label>Reorder at</label><input id="i_re" type="number" value="5"></div>
+      <div><label>Cost</label><input id="i_cost" type="number" step="any" value="0"></div>
+      <div><label>Price</label><input id="i_price" type="number" step="any" value="0"></div>
+    </div>
+    <div class="row"><button class="btn" onclick="addItem()">Add product</button></div>
+  </div>
+  <div class="card"><h3>Products</h3><div class="tw" id="itemList"></div></div>
+  <div class="card"><h3>Log an order</h3>
+    <div class="grid g4">
+      <div><label>Product</label><select id="o_item"></select></div>
+      <div><label>Quantity</label><input id="o_qty" type="number" value="1" min="1"></div>
+      <div><label>Customer</label><input id="o_cust"></div>
+      <div><label>Record sale in cash flow</label><select id="o_cash"><option value="1">Yes</option><option value="0">No</option></select></div>
+    </div>
+    <div class="row"><button class="btn" onclick="addOrder()">Add order</button></div>
+    <div class="tw" id="orderList" style="margin-top:12px"></div>
+  </div>
+  <div class="card"><h3>Log a return</h3>
+    <div class="grid g4">
+      <div><label>Product</label><select id="r_item"></select></div>
+      <div><label>Quantity</label><input id="r_qty" type="number" value="1" min="1"></div>
+      <div><label>Reason</label><input id="r_why"></div>
+      <div><label>Put back in stock</label><select id="r_stock"><option value="1">Yes</option><option value="0">No</option></select></div>
+      <div><label>Refund customer</label><select id="r_ref"><option value="1">Yes (adds expense)</option><option value="0">No</option></select></div>
+    </div>
+    <div class="row"><button class="btn" onclick="addReturn()">Add return</button></div>
+    <div class="tw" id="returnList" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<!-- INVOICES -->
+<section class="tab" id="tab-docs">
+  <div class="card"><h2>Invoices &amp; Quotes</h2><p class="sub">Build a document, preview it, print or save as PDF.</p>
+    <div class="grid g4">
+      <div><label>Type</label><select id="d_type" onchange="renderDoc()"><option value="Invoice">Invoice</option><option value="Quote">Quote</option></select></div>
+      <div><label>Client name</label><input id="d_client" oninput="renderDoc()"></div>
+      <div><label>Client email</label><input id="d_mail" oninput="renderDoc()"></div>
+      <div><label>Date</label><input id="d_date" type="date" oninput="renderDoc()"></div>
+      <div><label>Due / valid until</label><input id="d_due" type="date" oninput="renderDoc()"></div>
+      <div><label>Tax %</label><input id="d_tax" type="number" step="any" value="0" oninput="renderDoc()"></div>
+    </div>
+    <h3 style="margin-top:14px">Line items</h3>
+    <div id="d_rows"></div>
+    <div class="row"><button class="btn alt" onclick="addRow()">+ Add line</button></div>
+    <div style="margin-top:10px"><label>Notes / payment terms</label><textarea id="d_notes" oninput="renderDoc()"></textarea></div>
+    <div class="row"><button class="btn" onclick="saveDoc()">Save</button><button class="btn alt" onclick="window.print()">Print / Save as PDF</button></div>
+  </div>
+  <div class="printable" id="docPreview"></div>
+  <div class="card" style="margin-top:14px"><h3>Saved documents</h3><div class="tw" id="docList"></div></div>
+</section>
+
+<!-- CONTRACTS -->
+<section class="tab" id="tab-contract">
+  <div class="card"><h2>Contract Templates</h2><p class="sub">Fill in the fields, then edit the text if needed. Templates are general starting points, not legal advice: have a lawyer review before using with clients.</p>
+    <div class="grid g4">
+      <div><label>Template</label><select id="k_type" onchange="genContract()"><option value="service">Service agreement</option><option value="nda">Simple NDA</option></select></div>
+      <div><label>Your name / company</label><input id="k_a" oninput="genContract()"></div>
+      <div><label>Other party</label><input id="k_b" oninput="genContract()"></div>
+      <div><label>Date</label><input id="k_date" type="date" oninput="genContract()"></div>
+      <div><label>Fee</label><input id="k_fee" oninput="genContract()" placeholder="e.g. 1,500"></div>
+      <div><label>Term (days)</label><input id="k_term" type="number" value="30" oninput="genContract()"></div>
+    </div>
+    <div style="margin-top:10px"><label>Scope of work / confidential subject</label><textarea id="k_scope" oninput="genContract()"></textarea></div>
+    <div style="margin-top:10px"><label>Contract text (editable)</label><textarea id="k_text" style="min-height:260px" oninput="syncContract()"></textarea></div>
+    <div class="row"><button class="btn" onclick="copyContract()">Copy text</button><button class="btn alt" onclick="window.print()">Print / Save as PDF</button></div>
+  </div>
+  <div class="printable" id="contractPreview"><pre id="contractPre"></pre></div>
+</section>
+
+</main>
+<script>
+const KEY='shopkit.pro.v1';
+const TABS=[['dash','Dashboard'],['profit','Profit'],['cash','Cash flow'],['inv','Inventory'],['docs','Invoices & Quotes'],['contract','Contracts']];
+const blank=()=>({settings:{biz:'My Business',cur:'$'},cash:[],items:[],orders:[],returns:[],docs:[],profit:null,seq:{Invoice:0,Quote:0}});
+let S=blank();
+try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(blank(),JSON.parse(r))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>S.settings.cur+(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=id=>parseFloat($(id).value)||0;
+const today=()=>new Date().toISOString().slice(0,10);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const cls=n=>n>=0?'ok':'bad';
+
+/* navigation */
+function show(t){
+  document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id==='tab-'+t));
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  try{location.hash=t}catch(e){}
+  renderAll();
+}
+$('nav').innerHTML=TABS.map(t=>`<button data-t="${t[0]}" onclick="show('${t[0]}')">${t[1]}</button>`).join('');
+
+/* dashboard & settings */
+function renderDash(){
+  $('bizName').textContent=S.settings.biz;
+  $('setBiz').value=S.settings.biz;$('setCur').value=S.settings.cur;
+  const inc=S.cash.filter(c=>c.type==='in').reduce((a,c)=>a+c.amt,0);
+  const out=S.cash.filter(c=>c.type==='out').reduce((a,c)=>a+c.amt,0);
+  const low=S.items.filter(i=>i.stock<=i.re);
+  const open=S.orders.filter(o=>o.status!=='Delivered').length;
+  const stockVal=S.items.reduce((a,i)=>a+i.stock*i.cost,0);
+  const m=S.profit?S.profit.margin:null;
+  const st=[['Income',money(inc),''],['Expenses',money(out),''],['Net cash',money(inc-out),cls(inc-out)],
+    ['Stock value',money(stockVal),''],['Open orders',open,''],['Returns logged',S.returns.length,''],
+    ['Low-stock items',low.length,low.length?'bad':'ok'],['Expected margin',m==null?'-':m.toFixed(1)+'%',m==null?'':cls(m)]];
+  $('dashStats').innerHTML=st.map(s=>`<div class="stat"><small>${s[0]}</small><b class="${s[2]}">${s[1]}</b></div>`).join('');
+  $('dashLow').innerHTML=low.length?`<div class="tw"><table><tr><th>SKU</th><th>Product</th><th>Stock</th><th>Reorder at</th></tr>${low.map(i=>`<tr><td>${esc(i.sku)}</td><td>${esc(i.name)}</td><td class="bad">${i.stock}</td><td>${i.re}</td></tr>`).join('')}</table></div>`:'<div class="empty">Nothing running low.</div>';
+}
+function saveSettings(){S.settings.biz=$('setBiz').value.trim()||'My Business';S.settings.cur=$('setCur').value||'$';save();renderAll()}
+function exportBackup(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='shopkit-backup-'+today()+'.json';a.click()}
+function importBackup(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=Object.assign(blank(),JSON.parse(r.result));save();renderAll();alert('Backup imported.')}catch(x){alert('Invalid backup file.')}};r.readAsText(f)}
+function resetAll(){if(confirm('Delete ALL data? This cannot be undone.')){S=blank();save();renderAll()}}
+
+/* profit */
+function calcProfit(){
+  const price=num('p_price'),cost=num('p_cost'),ship=num('p_ship'),ads=num('p_ads'),fee=num('p_fee'),pay=num('p_pay'),fix=num('p_fix'),ret=num('p_ret')/100,units=num('p_units');
+  const fees=price*(fee+pay)/100+fix;
+  const unit=price-cost-ship-fees-ads;
+  const lossOnReturn=-(ship+fees+ads);
+  const exp=(1-ret)*unit+ret*lossOnReturn;
+  const margin=price?exp/price*100:0;
+  const contrib=price-cost-ship-fees;
+  const roas=contrib>0?price/contrib:null;
+  const maxAds=contrib;
+  S.profit={margin};save();
+  const out=[['Fees per sale',money(fees),''],['Profit per sale (no returns)',money(unit),cls(unit)],['Expected profit per sale',money(exp),cls(exp)],['Net margin',margin.toFixed(1)+'%',cls(margin)],
+    ['Break-even ROAS',roas?roas.toFixed(2)+'x':'n/a',''],['Max ad cost per sale',money(maxAds),maxAds>0?'':'bad'],['Monthly profit',money(exp*units),cls(exp*units)],['Monthly revenue',money(price*units*(1-ret)),'']];
+  $('profitOut').innerHTML=out.map(s=>`<div class="stat"><small>${s[0]}</small><b class="${s[2]}">${s[1]}</b></div>`).join('');
+}
+document.querySelectorAll('#tab-profit input').forEach(i=>i.addEventListener('input',calcProfit));
+
+/* cash flow */
+function addCash(){const amt=num('c_amt');if(!amt)return alert('Enter an amount.');
+  S.cash.push({id:uid(),date:$('c_date').value||today(),type:$('c_type').value,cat:$('c_cat').value.trim(),amt:Math.abs(amt),note:$('c_note').value.trim()});
+  $('c_amt').value='';$('c_note').value='';save();renderAll()}
+function delCash(id){S.cash=S.cash.filter(c=>c.id!==id);save();renderAll()}
+function renderCash(){
+  if(!$('c_date').value)$('c_date').value=today();
+  const list=[...S.cash].sort((a,b)=>b.date.localeCompare(a.date));
+  $('cashList').innerHTML=list.length?`<table><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th class="right">Amount</th><th></th></tr>${list.map(c=>`<tr><td>${esc(c.date)}</td><td>${c.type==='in'?'Income':'Expense'}</td><td>${esc(c.cat)}</td><td>${esc(c.note)}</td><td class="right ${c.type==='in'?'ok':'bad'}">${c.type==='in'?'+':'-'}${money(c.amt)}</td><td><button class="btn del" onclick="delCash('${c.id}')">x</button></td></tr>`).join('')}</table>`:'<div class="empty">No entries yet.</div>';
+  const by={};S.cash.forEach(c=>{const k=c.date.slice(0,7);by[k]=by[k]||{i:0,o:0};c.type==='in'?by[k].i+=c.amt:by[k].o+=c.amt});
+  const ks=Object.keys(by).sort().reverse();
+  $('cashMonths').innerHTML=ks.length?`<table><tr><th>Month</th><th class="right">Income</th><th class="right">Expenses</th><th class="right">Net</th></tr>${ks.map(k=>`<tr><td>${k}</td><td class="right">${money(by[k].i)}</td><td class="right">${money(by[k].o)}</td><td class="right ${cls(by[k].i-by[k].o)}">${money(by[k].i-by[k].o)}</td></tr>`).join('')}</table>`:'<div class="empty">Nothing to summarize yet.</div>';
+}
+function exportCSV(){const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const rows=[['date','type','category','amount','note'],...S.cash.map(c=>[c.date,c.type,c.cat,c.amt,c.note])];
+  const b=new Blob([rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cashflow.csv';a.click()}
+
+/* inventory */
+function addItem(){const name=$('i_name').value.trim();if(!name)return alert('Enter a product name.');
+  S.items.push({id:uid(),sku:$('i_sku').value.trim(),name,stock:parseInt($('i_stock').value)||0,re:parseInt($('i_re').value)||0,cost:num('i_cost'),price:num('i_price')});
+  ['i_sku','i_name'].forEach(i=>$(i).value='');save();renderAll()}
+function delItem(id){if(confirm('Delete this product?')){S.items=S.items.filter(i=>i.id!==id);save();renderAll()}}
+function adjStock(id,d){const i=S.items.find(x=>x.id===id);if(i){i.stock=Math.max(0,i.stock+d);save();renderAll()}}
+function addOrder(){const it=S.items.find(i=>i.id===$('o_item').value);if(!it)return alert('Add a product first.');
+  const q=parseInt($('o_qty').value)||1;if(q>it.stock&&!confirm('Quantity exceeds stock. Continue?'))return;
+  it.stock=Math.max(0,it.stock-q);
+  S.orders.push({id:uid(),date:today(),item:it.id,name:it.name,qty:q,cust:$('o_cust').value.trim(),status:'Open',total:q*it.price});
+  if($('o_cash').value==='1'&&it.price)S.cash.push({id:uid(),date:today(),type:'in',cat:'Sales',amt:q*it.price,note:q+' x '+it.name});
+  $('o_cust').value='';save();renderAll()}
+function setStatus(id,v){const o=S.orders.find(x=>x.id===id);if(o){o.status=v;save();renderAll()}}
+function delOrder(id){S.orders=S.orders.filter(o=>o.id!==id);save();renderAll()}
+function addReturn(){const it=S.items.find(i=>i.id===$('r_item').value);if(!it)return alert('Add a product first.');
+  const q=parseInt($('r_qty').value)||1;
+  if($('r_stock').value==='1')it.stock+=q;
+  if($('r_ref').value==='1'&&it.price)S.cash.push({id:uid(),date:today(),type:'out',cat:'Refunds',amt:q*it.price,note:'Return: '+q+' x '+it.name});
+  S.returns.push({id:uid(),date:today(),name:it.name,qty:q,why:$('r_why').value.trim()});
+  $('r_why').value='';save();renderAll()}
+function delReturn(id){S.returns=S.returns.filter(r=>r.id!==id);save();renderAll()}
+function renderInv(){
+  const opts=S.items.map(i=>`<option value="${i.id}">${esc(i.name)} (${i.stock})</option>`).join('')||'<option value="">No products</option>';
+  const a=$('o_item').value,b=$('r_item').value;$('o_item').innerHTML=opts;$('r_item').innerHTML=opts;
+  if(S.items.some(i=>i.id===a))$('o_item').value=a;if(S.items.some(i=>i.id===b))$('r_item').value=b;
+  $('itemList').innerHTML=S.items.length?`<table><tr><th>SKU</th><th>Product</th><th>Stock</th><th>Status</th><th class="right">Cost</th><th class="right">Price</th><th></th></tr>${S.items.map(i=>`<tr><td>${esc(i.sku)}</td><td>${esc(i.name)}</td><td><button class="btn del" onclick="adjStock('${i.id}',-1)">-</button>${i.stock}<button class="btn del" style="color:var(--ok)" onclick="adjStock('${i.id}',1)">+</button></td><td>${i.stock<=i.re?'<span class="badge low">Low</span>':'<span class="badge">OK</span>'}</td><td class="right">${money(i.cost)}</td><td class="right">${money(i.price)}</td><td><button class="btn del" onclick="delItem('${i.id}')">x</button></td></tr>`).join('')}</table>`:'<div class="empty">No products yet.</div>';
+  $('orderList').innerHTML=S.orders.length?`<table><tr><th>Date</th><th>Product</th><th>Qty</th><th>Customer</th><th>Status</th><th class="right">Total</th><th></th></tr>${[...S.orders].reverse().map(o=>`<tr><td>${o.date}</td><td>${esc(o.name)}</td><td>${o.qty}</td><td>${esc(o.cust)}</td><td><select onchange="setStatus('${o.id}',this.value)">${['Open','Shipped','Delivered'].map(s=>`<option${s===o.status?' selected':''}>${s}</option>`).join('')}</select></td><td class="right">${money(o.total)}</td><td><button class="btn del" onclick="delOrder('${o.id}')">x</button></td></tr>`).join('')}</table>`:'<div class="empty">No orders yet.</div>';
+  $('returnList').innerHTML=S.returns.length?`<table><tr><th>Date</th><th>Product</th><th>Qty</th><th>Reason</th><th></th></tr>${[...S.returns].reverse().map(r=>`<tr><td>${r.date}</td><td>${esc(r.name)}</td><td>${r.qty}</td><td>${esc(r.why)}</td><td><button class="btn del" onclick="delReturn('${r.id}')">x</button></td></tr>`).join('')}</table>`:'<div class="empty">No returns yet.</div>';
+}
+
+/* invoices & quotes */
+let rows=[{d:'',q:1,p:0}];
+function addRow(){rows.push({d:'',q:1,p:0});drawRows();renderDoc()}
+function delRow(i){rows.splice(i,1);if(!rows.length)rows.push({d:'',q:1,p:0});drawRows();renderDoc()}
+function setRow(i,k,v){rows[i][k]=k==='d'?v:(parseFloat(v)||0);renderDoc()}
+function drawRows(){$('d_rows').innerHTML=rows.map((r,i)=>`<div class="row" style="margin-top:6px"><div style="flex:3;min-width:140px"><input placeholder="Description" value="${esc(r.d)}" oninput="setRow(${i},'d',this.value)"></div><div style="flex:1;min-width:70px"><input type="number" step="any" value="${r.q}" oninput="setRow(${i},'q',this.value)"></div><div style="flex:1;min-width:90px"><input type="number" step="any" value="${r.p}" oninput="setRow(${i},'p',this.value)"></div><button class="btn del" onclick="delRow(${i})">x</button></div>`).join('')}
+function docTotals(){const sub=rows.reduce((a,r)=>a+r.q*r.p,0);const tax=sub*num('d_tax')/100;return{sub,tax,total:sub+tax}}
+function renderDoc(){
+  const t=$('d_type').value,n=(S.seq[t]||0)+1,no=(t==='Invoice'?'INV-':'QUO-')+String(n).padStart(4,'0'),T=docTotals();
+  $('docPreview').innerHTML=`<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h1>${t.toUpperCase()}</h1><div>${no}</div></div><div class="right"><b>${esc(S.settings.biz)}</b></div></div>
+  <div style="margin:18px 0"><b>Bill to</b><br>${esc($('d_client').value)||'-'}<br>${esc($('d_mail').value)}</div>
+  <div>Date: ${esc($('d_date').value)}${$('d_due').value?' &nbsp; '+(t==='Invoice'?'Due':'Valid until')+': '+esc($('d_due').value):''}</div>
+  <table style="margin-top:14px"><tr><th>Description</th><th class="right">Qty</th><th class="right">Price</th><th class="right">Amount</th></tr>${rows.map(r=>`<tr><td>${esc(r.d)}</td><td class="right">${r.q}</td><td class="right">${money(r.p)}</td><td class="right">${money(r.q*r.p)}</td></tr>`).join('')}</table>
+  <div class="right" style="margin-top:12px">Subtotal: ${money(T.sub)}<br>Tax (${num('d_tax')}%): ${money(T.tax)}<br><b style="font-size:18px">Total: ${money(T.total)}</b></div>
+  ${$('d_notes').value?`<div style="margin-top:18px;white-space:pre-wrap"><b>Notes</b><br>${esc($('d_notes').value)}</div>`:''}`;
+}
+function saveDoc(){const t=$('d_type').value;S.seq[t]=(S.seq[t]||0)+1;const no=(t==='Invoice'?'INV-':'QUO-')+String(S.seq[t]).padStart(4,'0');
+  S.docs.push({id:uid(),no,type:t,client:$('d_client').value,mail:$('d_mail').value,date:$('d_date').value,due:$('d_due').value,tax:num('d_tax'),notes:$('d_notes').value,rows:JSON.parse(JSON.stringify(rows)),total:docTotals().total});
+  save();renderAll();alert(no+' saved.')}
+function loadDoc(id){const d=S.docs.find(x=>x.id===id);if(!d)return;$('d_type').value=d.type;$('d_client').value=d.client;$('d_mail').value=d.mail;$('d_date').value=d.date;$('d_due').value=d.due;$('d_tax').value=d.tax;$('d_notes').value=d.notes;rows=JSON.parse(JSON.stringify(d.rows));drawRows();renderDoc();window.scrollTo(0,0)}
+function delDoc(id){S.docs=S.docs.filter(d=>d.id!==id);save();renderAll()}
+function renderDocs(){
+  if(!$('d_date').value)$('d_date').value=today();
+  drawRowsOnce();renderDoc();
+  $('docList').innerHTML=S.docs.length?`<table><tr><th>No.</th><th>Client</th><th>Date</th><th class="right">Total</th><th></th></tr>${[...S.docs].reverse().map(d=>`<tr><td>${d.no}</td><td>${esc(d.client)}</td><td>${esc(d.date)}</td><td class="right">${money(d.total)}</td><td><button class="btn alt" onclick="loadDoc('${d.id}')">Open</button><button class="btn del" onclick="delDoc('${d.id}')">x</button></td></tr>`).join('')}</table>`:'<div class="empty">No saved documents yet.</div>';
+}
+let rowsDrawn=false;function drawRowsOnce(){if(!rowsDrawn){drawRows();rowsDrawn=true}}
+
+/* contracts */
+function genContract(){
+  const A=$('k_a').value||'[Your name / company]',B=$('k_b').value||'[Other party]',D=$('k_date').value||today(),F=$('k_fee').value||'[amount]',T=$('k_term').value||'30',Sc=$('k_scope').value||'[describe the scope]';
+  const svc=`SERVICE AGREEMENT
+
+This agreement is made on ${D} between ${A} ("Provider") and ${B} ("Client").
+
+1. Services
+Provider will deliver the following: ${Sc}
+
+2. Fee and payment
+Client will pay ${S.settings.cur}${F}. Invoices are payable within 14 days of issue unless agreed otherwise in writing.
+
+3. Term
+This agreement runs for ${T} days from the date above and may be extended in writing by both parties.
+
+4. Revisions and changes
+Changes to the scope must be agreed in writing and may change the fee and timeline.
+
+5. Ownership
+Upon full payment, Client receives the right to use the final deliverables for their business. Provider keeps rights to pre-existing tools and methods.
+
+6. Confidentiality
+Each party will keep the other's non-public business information confidential.
+
+7. Termination
+Either party may end this agreement with 7 days written notice. Client pays for work completed up to that date.
+
+8. Liability
+Provider's liability is limited to the fee paid under this agreement.
+
+Signed:
+
+______________________  ${A}          ______________________  ${B}
+Date: ________________                  Date: ________________`;
+  const nda=`NON-DISCLOSURE AGREEMENT
+
+This agreement is made on ${D} between ${A} and ${B}.
+
+1. Purpose
+The parties will share confidential information relating to: ${Sc}
+
+2. Confidential information
+Any non-public information shared by one party with the other, in any form, about the subject above.
+
+3. Obligations
+The receiving party will use the information only for the purpose above, will not disclose it to third parties, and will protect it with reasonable care.
+
+4. Exceptions
+This does not cover information that is public through no fault of the receiver, was already known to the receiver, or must be disclosed by law.
+
+5. Duration
+These obligations last ${T} days from the date above, unless the parties agree otherwise in writing.
+
+6. Return of materials
+On request, the receiving party will return or delete confidential materials.
+
+Signed:
+
+______________________  ${A}          ______________________  ${B}
+Date: ________________                  Date: ________________`;
+  $('k_text').value=$('k_type').value==='nda'?nda:svc;syncContract();
+}
+function syncContract(){$('contractPre').textContent=$('k_text').value}
+function copyContract(){try{navigator.clipboard.writeText($('k_text').value);alert('Copied.')}catch(e){$('k_text').select();document.execCommand('copy')}}
+
+function renderAll(){renderDash();calcProfit();renderCash();renderInv();renderDocs()}
+$('k_date').value=today();$('k_a').value='';genContract();
+const start=(location.hash||'').slice(1);
+show(TABS.some(t=>t[0]===start)?start:'dash');
+</script>
+</body>
+</html>
